@@ -15,7 +15,7 @@ Arvind Kejriwal:    0x417276696e64204b656a726977616c0000000000000000000000000000
 Yogi Adityanath:    0x596f6769204164697479616e6174680000000000000000000000000000000000  0x617F2E2fD72FD9D5503197092aC168c91465E7f2
      
 Contract input argument:
-["0x4e6172656e647261204d6f646920000000000000000000000000000000000000","0x526168756c2047616e6468692000000000000000000000000000000000000000","0x417276696e64204b656a726977616c0000000000000000000000000000000000","0x596f6769204164697479616e6174680000000000000000000000000000000000"],["0x5B38Da6a701c568545dCfcB03FcB875f56beddC4","0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2","0x4B20993Bc481177ec7E8f571ceCaE8A9e22C02db","0x78731D3Ca6b7E34aC0F824c42a7cC18A495cabaB","0x617F2E2fD72FD9D5503197092aC168c91465E7f2","0x17F6AD8Ef982297579C203069C1DbfFE4348c372","0x5c6B0f7Bf3E7ce046039Bd8FABdfD3f9F5021678"]
+["0x5B38Da6a701c568545dCfcB03FcB875f56beddC4","0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2","0x4B20993Bc481177ec7E8f571ceCaE8A9e22C02db","0x78731D3Ca6b7E34aC0F824c42a7cC18A495cabaB","0x617F2E2fD72FD9D5503197092aC168c91465E7f2","0x17F6AD8Ef982297579C203069C1DbfFE4348c372","0x5c6B0f7Bf3E7ce046039Bd8FABdfD3f9F5021678"]
 ***/
 
 // SPDX-License-Identifier: GPL-3.0
@@ -43,7 +43,12 @@ contract Voting_System {
     Proposal[] public proposals;
     address[] public voter_List;
 
-    constructor(bytes32[] memory proposalNames, address[] memory voter_list) {
+    uint NC = 0;
+    uint start;
+    uint end;
+
+
+    constructor(address[] memory voter_list) {
         chairperson = msg.sender; //Gives Address of Owner to chairperson
         voter_List = voter_list; //Puts the list of the address eligible for votes
 
@@ -51,14 +56,35 @@ contract Voting_System {
         for (uint256 i = 0; i < voter_List.length; i++) {
              voters[voter_List[i]].weight = 1;
         }
+        start = block.timestamp;
+        end = start + 100;
 
         //Put the Proposals in the proposal Array one by one
-        for (uint256 i = 0; i < proposalNames.length; i++) {
-            proposals.push(Proposal({name: proposalNames[i], voteCount: 0}));
-        }
+        // for (uint256 i = 0; i < proposalNames.length; i++) {
+        //     proposals.push(Proposal({name: proposalNames[i], voteCount: 0}));
+        // }
+    }
+
+    function nomination_file(bytes32 proposalNames) external {
+        require(msg.sender == chairperson);
+        require(block.timestamp < end);
+        uint256 i = 0;
+        proposals.push(Proposal({name: proposalNames[i], voteCount: 0}));
+        i++;        
+    }
+
+    function time_left() public view returns (uint){
+        return end-block.timestamp;
+    }
+
+    function Nomination_Closed() external{
+        require(msg.sender == chairperson);
+        require(end==0);
+        NC=1;
     }
 
     function vote(uint256 proposal) external {
+        require(NC == 1);
         Voter storage sender = voters[msg.sender];
         require(sender.weight != 0, "Not in the Voter List"); //Check if he has the right to vote
         require(!sender.voted, "Already voted."); //Checks if the person has already voted or not
