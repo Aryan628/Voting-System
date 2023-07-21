@@ -2,7 +2,7 @@
 
 The Chairperson:    0x5B38Da6a701c568545dCfcB03FcB875f56beddC4
 
-Proposal names:     Narendra Modi , Rahul Gandhi , Arvind Kejriwal , Yogi Adityanath
+Proposal names:     
 (name, bytes32-encoded name, account)
 
 Narendra Modi:      0x4e6172656e647261204d6f646900000000000000000000000000000000000000  0xAb8483F64d9C6d1EcF9b849Ae677dD3315835cb2
@@ -25,7 +25,6 @@ contract Voting_System {
     struct Voter {
         uint256 weight; // No. of times vote can be given
         bool voted; // Vote given or not ie. TRUE or FALSE
-        // address delegate; // Whom to give his votter rights
         uint256 vote; //Whom Vote is given by the voter
     }
 
@@ -40,12 +39,11 @@ contract Voting_System {
     //Address of Voter can be called with help of Voters
     mapping(address => Voter) public voters; // Key=>voters  Values=>Voter
 
-    Proposal[] public proposals;
-    address[] public voter_List;
+    Proposal[] public proposals; //Array containing all the names of candidates 
+    address[] public voter_List; //Array containing all addresses of voters who are eligible to vote
 
-    // uint NC = 0;
-    uint start;
-    uint end;
+    uint start; //Time Stamp Start
+    uint end; //Time Stamp end
     
 
 
@@ -57,21 +55,24 @@ contract Voting_System {
         for (uint256 i = 0; i < voter_List.length; i++) {
              voters[voter_List[i]].weight = 1;
         }
-        start = block.timestamp;
-        end = start + 60;
+        start = block.timestamp; //Starting the timestamp
+        end = start + 60; //Declaring the limit of time stamp
     }
 
+    // Function to file the nomination
     function nomination_file(bytes32 proposalNames) external {
         require(msg.sender == chairperson,"You are not the chairperson");
-        require(block.timestamp < end,"Nomination not Closed");
+        require(block.timestamp < end,"Nomination Closed");
         proposals.push(Proposal({name: proposalNames, voteCount: 0}));
 
     }
 
+    //Function to show the remaining time
     function time_left() public view returns (uint){
         return end-block.timestamp;
     }
 
+    //Function to vote
     function vote(uint256 proposal) external {
         require(block.timestamp > end,"Nomination not Closed");
         Voter storage sender = voters[msg.sender];
@@ -79,12 +80,12 @@ contract Voting_System {
         require(!sender.voted, "Already voted."); //Checks if the person has already voted or not
         sender.voted = true;
         sender.vote = proposal; //Stores the index no. of the person who got the vote
-        sender.weight = sender.weight - 1; //After Voting Decrease the weight of the voter so that he can't vote twice
+        // sender.weight = sender.weight - 1; //After Voting Decrease the weight of the voter so that he can't vote twice
         proposals[proposal-1].voteCount += 1; //Increase the no. of vote of the candidates by 1
     }
 
-    //Count the winner and returns the index of the person who won
-    function winningProposal() public view returns (uint256 winningProposal_) {
+    //Count the winner and returns the index of the candidate who won
+    function winningProposal() public view  returns (uint256 winningProposal_) {
         require(msg.sender == chairperson,"You are not the chairperson");
         require(block.timestamp > end,"Nomination not Closed");
         uint256 winningVoteCount = 0;
@@ -96,7 +97,7 @@ contract Voting_System {
         }
     }
 
-    //Returns the name of the candidates who won
+    //Returns the name of the candidate who won
     function winnerName() external view returns (string memory) {
         require(msg.sender == chairperson,"You are not the chairperson");
         require(block.timestamp > end,"Nomination not Closed");
