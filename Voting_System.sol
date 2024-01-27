@@ -23,9 +23,9 @@ pragma solidity 0.8.20;
 contract Voting_System {
     //Structure for Voter
     struct Voter {
-        uint256 weight; // No. of times vote can be given
+        uint256 weight; // No. of times vote can be given.
         bool voted; // Vote given or not ie. TRUE or FALSE
-        uint256 vote; //Whom Vote is given by the voter
+        uint256 vote; //Whom Vote is given by the voter.
     }
 
     //For Party
@@ -39,11 +39,12 @@ contract Voting_System {
     //Address of Voter can be called with help of Voters
     mapping(address => Voter) public voters; // Key=>voters  Values=>Voter
 
-    Proposal[] public proposals; //Array containing all the names of candidates 
-    address[] public voter_List; //Array containing all addresses of voters who are eligible to vote
+    Proposal[] public proposals; //Array containing all the names of candidates. 
+    address[] public voter_List; //Array containing all addresses of voters who are eligible to vote.
 
     uint start; //Time Stamp Start
-    uint end; //Time Stamp end
+    uint end; //Nomination Time Stamp end
+    uint end_Voting; //Voting Time Stamp Stop
     
 
 
@@ -57,6 +58,7 @@ contract Voting_System {
         }
         start = block.timestamp; //Starting the timestamp
         end = start + 60; //Declaring the limit of time stamp
+        end_Voting = end + 60;
     }
 
     // Function to file the nomination
@@ -72,22 +74,32 @@ contract Voting_System {
         return end-block.timestamp;
     }
 
+    //Function to Show the remaining time for voting
+    function Voting_Time_left() public view returns (uint){
+        require(block.timestamp > end,"Voting Not Started");
+        return end_Voting-block.timestamp;
+    }
+
     //Function to vote
     function vote(uint256 proposal) external {
-        require(block.timestamp > end,"Nomination not Closed");
+        require(block.timestamp > end,"Nomination not Closed Hence Voting Not Started");
+        require(block.timestamp < end_Voting,"Voting Booth closed");
         Voter storage sender = voters[msg.sender];
         require(sender.weight != 0, "Not in the Voter List"); //Check if he has the right to vote
-        require(!sender.voted, "Already voted."); //Checks if the person has already voted or not
+        require(!sender.voted, "Already voted."); //Checks if the person has already voted or not!
         sender.voted = true;
         sender.vote = proposal; //Stores the index no. of the person who got the vote
         // sender.weight = sender.weight - 1; //After Voting Decrease the weight of the voter so that he can't vote twice
         proposals[proposal-1].voteCount += 1; //Increase the no. of vote of the candidates by 1
     }
 
+
+
     //Count the winner and returns the index of the candidate who won
     function winningProposal() public view  returns (uint256 winningProposal_) {
         require(msg.sender == chairperson,"You are not the chairperson");
         require(block.timestamp > end,"Nomination not Closed");
+        require(block.timestamp > end_Voting,"Voting Not Closed");
         uint256 winningVoteCount = 0;
         for (uint256 p = 0; p < proposals.length; p++) {
             if (proposals[p].voteCount > winningVoteCount) {
@@ -101,6 +113,7 @@ contract Voting_System {
     function winnerName() external view returns (string memory) {
         require(msg.sender == chairperson,"You are not the chairperson");
         require(block.timestamp > end,"Nomination not Closed");
+        require(block.timestamp > end_Voting,"Voting Not Closed");
         bytes32 winnerName1 = proposals[winningProposal()].name;
         uint8 i = 0;
         while (i < 32 && winnerName1[i] != 0) {
